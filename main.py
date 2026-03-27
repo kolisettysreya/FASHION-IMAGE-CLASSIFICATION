@@ -3,6 +3,7 @@ import os
 import torch
 import torch.nn as nn
 
+
 def train(model, train_loader, optimizer, criterion, device, epochs=10):
     model.train()
     for epoch in range(epochs):
@@ -56,39 +57,42 @@ def evaluate(model, val_loader, criterion, device):
             total += labels.size(0)
 
     accuracy = 100 * correct / total
-    avg_loss=val_loss/len(val_loader)
+    avg_loss = val_loss / len(val_loader)
     print(f"Validation Loss: {avg_loss:.2f}, Validation Accuracy: {accuracy:.2f}%")
-    return accuracy,avg_loss
+    return accuracy, avg_loss
 
-def evaluate_random_minibatch(model,val_loader,criterion,device,num_batches=1):
+
+def evaluate_random_minibatch(model, val_loader, criterion, device, num_batches=1):
     model.eval()
-    val_loss=0.0
-    correct=0
-    total=0
+    val_loss = 0.0
+    correct = 0
+    total = 0
 
-    all_batches=list(val_loader)
-    chosen_batches=random.sample(all_batches,min(num_batches,len(all_batches)))
+    all_batches = list(val_loader)
+    chosen_batches = random.sample(all_batches, min(num_batches, len(all_batches)))
 
     with torch.no_grad():
-        for images,labels in chosen_batches:
-            images,labels=images.to(device),labels.to(device)
-            outputs=model(images)
+        for images, labels in chosen_batches:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
 
-            if isinstance(criterion,nn.BCELoss):
-                labels=labels.float().unsqueeze(1)
-                loss=criterion(outputs,labels)
-                predicted=(outputs>0.5).float()
+            if isinstance(criterion, nn.BCELoss):
+                labels = labels.float().unsqueeze(1)
+                loss = criterion(outputs, labels)
+                predicted = (outputs > 0.5).float()
             else:
-                loss=criterion(outputs,labels)
-                _,predicted=torch.max(outputs,1)
+                loss = criterion(outputs, labels)
+                _, predicted = torch.max(outputs, 1)
 
-            val_loss+=loss.item()
-            correct+=(predicted==labels).sum().item()
-            total+=labels.size(0)
-        accuracy=100*correct/total
-        avg_loss=val_loss/len(val_loader)
-        print(f"Validate Loss:{avg_loss:.4f},Validation Accuracy: {accuracy:.4f}")
-        return accuracy,avg_loss
+            val_loss += loss.item()
+            correct += (predicted == labels).sum().item()
+            total += labels.size(0)
+
+    accuracy = 100 * correct / total
+    avg_loss = val_loss / len(val_loader)
+    print(f"Validate Loss:{avg_loss:.4f}, Validation Accuracy: {accuracy:.4f}")
+    return accuracy, avg_loss
+
 
 import os
 import torch
@@ -97,15 +101,12 @@ import torch.optim as optim
 import Preprocess as pre
 import models
 import results as rp
-from torchviz import make_dot
-
+# FIX: Removed 'from torchviz import make_dot' — unused and crashes if torchviz not installed
 
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
-
-
 
     data_dir = r"C:\Endsemlab\DL\DATASET\masterCategory\SportsClassification"
     train_loader, test_loader, validate_loader, classes = pre.load_data(data_dir, batch_size=32, augment=True)
@@ -119,30 +120,21 @@ def main():
     print(f"Validation images: {len(validate_loader.dataset)}")
     print(f"Test images: {len(test_loader.dataset)}")
 
-    # Optional: visualize some training samples
     pre.visualize_data(train_loader, classes, num_samples=8)
-
-
-
-
 
     task_type = "binary" if len(classes) == 2 else "multi"
     num_classes = len(classes) if task_type == "multi" else None
 
-
     model = models.get_model(task_type, num_classes=num_classes).to(device)
-
 
     criterion = nn.BCELoss() if task_type == "binary" else nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    print("\n🔹 Training ANN Model...")
 
-    # input_size = channels * height * width
+    print("\n🔹 Training ANN Model...")
     sample_input, _ = next(iter(train_loader))
-    input_size = sample_input[0].numel()  # flatten one image
+    input_size = sample_input[0].numel()
 
     ann_model = models.ANNClassifier(input_size=input_size, num_classes=num_classes).to(device)
-
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(ann_model.parameters(), lr=0.001)
 
@@ -151,21 +143,21 @@ def main():
 
     print("\n🚀 Training the model...")
     train(model, train_loader, optimizer, criterion, device, epochs=10)
-    #
-    #
+
     print("\n📊 Evaluating on validation set...")
     evaluate(model, validate_loader, criterion, device)
-    results={}
-    for opt_name in {"SGD","Adam","RMSprop"}:
+
+    results = {}
+    for opt_name in {"SGD", "Adam", "RMSprop"}:
         print(f"\n=====Training with {opt_name} Optimizer=====")
-        model=models.get_model(task_type,num_classes=num_classes).to(device)
-        optimizer=models.get_optimizer(opt_name,model,lr=0.001)
+        model = models.get_model(task_type, num_classes=num_classes).to(device)
+        optimizer = models.get_optimizer(opt_name, model, lr=0.001)
 
         print("\n Training the model...")
-        train(model,train_loader,optimizer, criterion, device,epochs=10)
+        train(model, train_loader, optimizer, criterion, device, epochs=10)
 
         print("\n Evaluating the validation set...")
-        acc,loss=evaluate(model,validate_loader,criterion, device)
+        acc, loss = evaluate(model, validate_loader, criterion, device)
         results[opt_name] = {"accuracy": acc, "loss": loss}
         rp.plot_optimizer_results(results)
 
@@ -184,9 +176,6 @@ def main():
     sample_image, _ = next(iter(validate_loader))
     sample_image = sample_image[0].unsqueeze(0)
     model.visualize_layer_outputs(sample_image)
-
-    # call standalone visualize function
-
 
     # Train new CNN with regularization
     model2 = models.CNNClassifier_regularization(num_classes=num_classes).to(device)
@@ -217,7 +206,6 @@ def main():
     train(vgg_model, train_loader, optimizer, criterion, device, epochs=10)
     evaluate(vgg_model, validate_loader, criterion, device)
 
-    # AlexNet model
     alex_model = models.AlexNetClassifier(num_classes=num_classes).to(device)
     criterion = nn.BCELoss() if task_type == "binary" else nn.CrossEntropyLoss()
     optimizer = optim.Adam(alex_model.parameters(), lr=0.001)
@@ -225,27 +213,27 @@ def main():
     train(alex_model, train_loader, optimizer, criterion, device, epochs=10)
     evaluate(alex_model, validate_loader, criterion, device)
 
-
     autoencoder = models.AutoEncoder(encoded_dim=256)
-    autoencoder.eval()  # freeze encoder
+    autoencoder.eval()
     classifier = models.ResNetClassifier(num_classes, encoded_dim=256)
-    model = models.EncoderClassifierWrapper(autoencoder, classifier).to(device)
+    enc_model = models.EncoderClassifierWrapper(autoencoder, classifier).to(device)
 
-    optimizer = torch.optim.Adam(model.classifier.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(enc_model.classifier.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 
     print("Training Encoder-Classifier Wrapper...")
-    train(model, train_loader, optimizer, criterion, device, epochs=10)
-    evaluate(model, validate_loader, criterion, device)
+    train(enc_model, train_loader, optimizer, criterion, device, epochs=10)
+    evaluate(enc_model, validate_loader, criterion, device)
 
     print("\nVisualizing original and reconstructed images from AutoEncoder...")
     models.visualize_reconstruction(autoencoder, validate_loader, device, num_images=6)
-    # Example: sequence length = 50, features per step = 32
+
     rnn_model = models.RNNClassifier(input_size=128, hidden_size=64, num_layers=2, num_classes=5, bidirectional=True)
     print(rnn_model)
-    mobilenet_model = models.MobileNetClassifier(num_classes=4)
+
+    mobilenet_model = models.MobileNetClassifier(num_classes=num_classes).to(device)
     print(mobilenet_model)
-    # Example: sequence length = 50, feature size = 32, num_classes = 5
+
     lstm_model = models.LSTMClassifier(
         input_size=32,
         hidden_size=64,
@@ -257,11 +245,10 @@ def main():
 
 
 def load_and_visualize_dataset(path_to_data):
-    """This is your original dataset loading code, but returns loaders and classes."""
     if not os.path.exists(path_to_data):
         raise FileNotFoundError(f"{path_to_data} does not exist!")
 
-    train_loader, test_loader, validate_loader,classes = pre.load_data(
+    train_loader, test_loader, validate_loader, classes = pre.load_data(
         data_dir=path_to_data,
         batch_size=32,
         augment=False
@@ -275,7 +262,6 @@ def load_and_visualize_dataset(path_to_data):
     pre.visualize_data(train_loader, classes, num_samples=8)
 
     return train_loader, test_loader, validate_loader, classes
-
 
 
 if __name__ == '__main__':
