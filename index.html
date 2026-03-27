@@ -2,48 +2,46 @@
 {% block content %}
 <h1 class="mb-4">Upload Image for Classification</h1>
 
-
 <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data" class="mb-4 p-3 bg-white rounded shadow-sm">
-<div class="row g-3 align-items-center">
-<div class="col-md-4">
-<input class="form-control" type="file" name="image" accept="image/*" required>
-</div>
-<div class="col-md-3">
-<select class="form-select" name="model">
-<option value="cnn">CNN</option>
-<option value="resnet">ResNet</option>
-<option value="vgg">VGG16</option>
-<option value="mobilenet">MobileNetV2</option>
-<option value="lstm">LSTM</option>
-</select>
-</div>
-<div class="col-md-2">
-<button class="btn btn-primary w-100">Predict</button>
-</div>
-</div>
+  <div class="row g-3 align-items-center">
+    <div class="col-md-4">
+      <input class="form-control" type="file" name="image" accept="image/*" required>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="model">
+        <option value="cnn">CNN</option>
+        <option value="resnet">ResNet</option>
+        <option value="vgg">VGG16</option>
+        <option value="mobilenet">MobileNetV2</option>
+        <option value="lstm">LSTM</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">Predict</button>
+    </div>
+  </div>
 </form>
-
 
 {% if predictions %}
 <div class="card shadow-sm p-3">
-<h4 class="mb-3">Prediction Results</h4>
-<ul class="list-group">
-{% for p in predictions %}
-<li class="list-group-item d-flex justify-content-between align-items-center">
-<span>{{ p.label }}</span>
-<span class="badge bg-primary">{{ p.confidence }}%</span>
-</li>
-{% endfor %}
-</ul>
+  <h4 class="mb-3">Prediction Results</h4>
+  <ul class="list-group">
+    {% for p in predictions %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>{{ p.label }}</span>
+      <!-- FIX: confidence is already 0.0-1.0 from app.py, multiply by 100 here -->
+      <span class="badge bg-primary">{{ (p.confidence * 100) | round(2) }}%</span>
+    </li>
+    {% endfor %}
+  </ul>
 </div>
 {% endif %}
-
 
 <hr class="my-4">
 <h4>Available Classes</h4>
 <div class="d-flex flex-wrap">
-{% for c in classes %}
-<span class="badge bg-secondary me-2 mb-2">{{ c }}</span>
-{% endfor %}
+  {% for c in classes %}
+  <span class="badge bg-secondary me-2 mb-2">{{ c }}</span>
+  {% endfor %}
 </div>
 {% endblock %}
