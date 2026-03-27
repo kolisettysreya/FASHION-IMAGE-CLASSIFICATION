@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<h2>Predictions</h2>
+<ul>
+{% for p in predictions %}
+  <li>{{ p.label }} - {{ (p.confidence * 100) | round(2) }}%</li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<h3>Related Images for "{{ top_label }}"</h3>
+<div class="row">
+{% for img in related_images %}
+  <div class="col-md-3 mb-3">
+    <div class="card shadow-sm">
+      <img src="/data/{{ img }}" class="card-img-top">
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+{% endblock %}

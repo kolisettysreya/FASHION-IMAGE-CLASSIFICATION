@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-primary fw-bold">Browsing: {{ category }}</h2>
+
+  <form action="/browse" method="get" class="row g-3 mb-4">
+    <div class="col-md-6 col-sm-8">
+      <input name="category" class="form-control" placeholder="Search category..." required>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-primary">
+        <i class="bi bi-search"></i> Search
+      </button>
+    </div>
+  </form>
+
+  {% if images %}
+    <div class="row">
+      {% for img in images %}
+      <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+        <div class="card shadow-sm border-0 rounded-3 hover-zoom">
+          <img src="/data/{{ img }}" class="card-img-top" alt="{{ img }}">
+          <div class="card-body text-center small text-muted">{{ img }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-warning">No images found for <b>{{ category }}</b>.</div>
+  {% endif %}
+</div>
+
+<style>
+.hover-zoom img {
+  transition: transform 0.3s ease;
+}
+.hover-zoom:hover img {
+  transform: scale(1.05);
+}
+</style>
+{% endblock %}
